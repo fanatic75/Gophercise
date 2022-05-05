@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -13,30 +12,27 @@ type Link struct {
 	Text string
 }
 
-var links []Link
-
-func Parsehtml(htmlString string) {
+func Parsehtml(htmlString string) []Link {
+	var links []Link
 	doc, err := html.Parse(strings.NewReader(htmlString))
 	if err != nil {
 		log.Fatal(err)
 	}
-	iterateOverTree(doc)
-
-	fmt.Printf("%+v\n", links)
-
+	iterateOverTree(doc, &links)
+	return links
 }
 
-func iterateOverTree(ele *html.Node) {
+func iterateOverTree(ele *html.Node, links *[]Link) {
 	if ele.Type == html.ElementNode && ele.Data == "a" {
-		getLink(ele)
+		getLink(ele, links)
 		return
 	}
 	for c := ele.FirstChild; c != nil; c = c.NextSibling {
-		iterateOverTree(c)
+		iterateOverTree(c, links)
 	}
 }
 
-func getLink(ele *html.Node) {
+func getLink(ele *html.Node, links *[]Link) {
 	link := Link{}
 	var text string
 	for _, attr := range ele.Attr {
@@ -45,11 +41,10 @@ func getLink(ele *html.Node) {
 		}
 	}
 	link.Text = strings.TrimSpace(getTextFromEle(ele, &text))
-	links = append(links, link)
+	*links = append(*links, link)
 }
 
 func getTextFromEle(ele *html.Node, text *string) string {
-
 	if ele.Type == html.TextNode {
 		*text += ele.Data
 	}
